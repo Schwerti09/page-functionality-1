@@ -1,0 +1,40 @@
+{
+  "name": "ZIP-SHIP - Cloud Deployment Platform",
+  "short_name": "ZIP-SHIP",
+  "description": "Deploy projects to GitHub in seconds via drag & drop",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A0E27",
+  "theme_color": "#00F0FF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["developer tools", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/dashboard",
+      "description": "Open Dashboard"
+    },
+    {
+      "name": "New Deploy",
+      "url": "/dashboard",
+      "description": "Deploy a new project"
+    }
+  ],
+  "screenshots": [],
+  "lang": "de-DE",
+  "dir": "ltr"
+}

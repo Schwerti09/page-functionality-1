@@ -1,0 +1,421 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Zap, Github, Database, ArrowRight, Check, 
+  Code, Cpu, Shield, Activity, Globe, Menu, X
+} from 'lucide-react';
+
+// --- TRANSLATIONS (The Brain of i18n) ---
+const translations = {
+  en: {
+    nav: { features: "FEATURES", protocol: "PROTOCOL", access: "ACCESS", login: "LOGIN" },
+    hero: {
+      badge: "SYSTEM V2.0 ONLINE",
+      title_1: "DEPLOYMENT",
+      title_2: "SINGULARITY",
+      subtitle: "Forget CI/CD pipelines. Forget YAML. Drag & drop your project into the cloud. GitHub, Netlify, and Supabase — provisioned automatically in seconds.",
+      cta_primary: "Start Sequence",
+      cta_secondary: "View Docs"
+    },
+    ui_mock: {
+      status: "ORCHESTRATING CLOUD INFRASTRUCTURE...",
+      step1: "[SUCCESS] GitHub Repo Created",
+      step2: "[SUCCESS] Netlify Edge Live",
+      step3: "[SUCCESS] Supabase Cluster Active"
+    },
+    stats: { active: "Active Deployments", saved: "Hours Saved", uptime: "Uptime SLA", latency: "Latency Global" },
+    trust: "Trusted by Engineers at",
+    features: {
+      headline: "THE ZERO-CONFIG PROTOCOL",
+      subhead: "We deconstructed the deployment process and reassembled it. No scripts. No copying keys. Pure speed.",
+      cards: [
+        { title: "Auto-Infrastructure", desc: "We analyze your ZIP archive. React? Node? Python? Our engine detects the stack and provisions the perfect environment." },
+        { title: "Secure Enclave", desc: "Your env vars are AES-256 encrypted and injected directly into Netlify & Supabase vaults. Never in plaintext." },
+        { title: "Instant Rollback", desc: "Every upload is an immutable snapshot. Something wrong? One click to turn back time. 100% Fail-Safe." },
+        { title: "DB Auto-Scaling", desc: "We don't just provision the DB. We set up connection pooling and read-replicas before you write your first query." },
+        { title: "Edge Propagation", desc: "Your frontend doesn't land on a server. It lands on 350+ edge nodes worldwide. <50ms TTFB guaranteed." },
+        { title: "Code Hygiene AI", desc: "Our Gemini-Core scans your code for security leaks and anti-patterns before upload. Your personal Senior Dev." }
+      ]
+    },
+    compare: {
+      old_badge: "THE OLD WAY",
+      old_title: "Config Hell & Time Loss",
+      old_list: ["Manual Repo Creation", "Copying API Keys (Human Error)", "20 Min Wait for CI/CD", "Reading Outdated Docs"],
+      new_badge: "THE ZIPSHIP WAY",
+      new_title: "Drag. Drop. Done.",
+      new_list: ["Upload 1 File", "Auto Environment Sync", "30 Seconds to Live", "More Time Coding"]
+    },
+    pricing: {
+      headline: "FAIR ACCESS",
+      subhead: "Invest in speed. Not in overhead.",
+      free: { title: "Hobbyist", price: "$0", period: "/mo", btn: "START FREE", features: ["5 Deploys / Month", "GitHub Only", "Community Support"] },
+      pro: { title: "Pro Engineer", price: "$19", period: "/mo", btn: "UPGRADE NOW", tag: "POPULAR", features: ["Unlimited Deploys", "GitHub + Netlify + Supabase", "AI Code Scan", "Priority Build Queue"] },
+      team: { title: "Agency", price: "$99", period: "/mo", btn: "CONTACT SALES", features: ["Everything in Pro", "5 Team Members", "White Label Dashboard", "Dedicated Slack Channel"] }
+    }
+  },
+  de: {
+    nav: { features: "FUNKTIONEN", protocol: "PROTOKOLL", access: "PREISE", login: "ANMELDEN" },
+    hero: {
+      badge: "SYSTEM V2.0 ONLINE",
+      title_1: "DEPLOYMENT",
+      title_2: "SINGULARITÄT",
+      subtitle: "Vergiss CI/CD Pipelines. Vergiss YAML. Zieh dein Projekt per Drag & Drop in die Cloud. GitHub, Netlify und Supabase – vollautomatisch provisioniert in Sekunden.",
+      cta_primary: "Sequenz Starten",
+      cta_secondary: "Doku Lesen"
+    },
+    ui_mock: {
+      status: "ORCHESTRIERE CLOUD INFRASTRUKTUR...",
+      step1: "[ERFOLG] GitHub Repo Erstellt",
+      step2: "[ERFOLG] Netlify Edge Live",
+      step3: "[ERFOLG] Supabase Cluster Aktiv"
+    },
+    stats: { active: "Aktive Deployments", saved: "Stunden Gespart", uptime: "Uptime SLA", latency: "Latenz Global" },
+    trust: "Genutzt von Engineers bei",
+    features: {
+      headline: "DAS ZERO-CONFIG PROTOKOLL",
+      subhead: "Wir haben den Deployment-Prozess dekonstruiert und neu zusammengesetzt. Keine Scripts. Keine Keys kopieren. Reine Geschwindigkeit.",
+      cards: [
+        { title: "Auto-Infrastruktur", desc: "Wir analysieren dein ZIP-Archiv. React? Node? Python? Unsere Engine erkennt den Stack und provisioniert die perfekte Umgebung." },
+        { title: "Secure Enclave", desc: "Deine Umgebungsvariablen werden AES-256 verschlüsselt und direkt in die Netlify & Supabase Vaults injiziert. Niemals im Plaintext." },
+        { title: "Instant Rollback", desc: "Jeder Upload ist ein immutable Snapshot. Geht etwas schief? Ein Klick und die Zeit wird zurückgedreht. 100% Fail-Safe." },
+        { title: "DB Auto-Scaling", desc: "Wir provisionieren nicht nur die Datenbank. Wir richten Connection Pooling und Read-Replicas ein, bevor du den ersten Query schreibst." },
+        { title: "Edge Propagation", desc: "Dein Frontend landet nicht auf einem Server. Es landet auf 350+ Edge Nodes weltweit. <50ms TTFB garantiert." },
+        { title: "Code Hygiene AI", desc: "Unser Gemini-Core scannt deinen Code vor dem Upload auf Security Leaks und Anti-Patterns. Dein persönlicher Senior Dev." }
+      ]
+    },
+    compare: {
+      old_badge: "DER ALTE WEG",
+      old_title: "Config Hölle & Zeitverlust",
+      old_list: ["Manuelles Erstellen von Repos", "API Keys Kopieren (Fehleranfällig)", "20 Min Warten auf CI/CD", "Veraltete Doku lesen"],
+      new_badge: "DER ZIPSHIP WEG",
+      new_title: "Drag. Drop. Fertig.",
+      new_list: ["1 Datei hochladen", "Auto Environment Sync", "30 Sekunden bis Live", "Mehr Zeit zum Coden"]
+    },
+    pricing: {
+      headline: "FAIRER ZUGANG",
+      subhead: "Investiere in Geschwindigkeit. Nicht in Overhead.",
+      free: { title: "Hobbyist", price: "0€", period: "/mo", btn: "KOSTENLOS STARTEN", features: ["5 Deploys / Monat", "Nur GitHub", "Community Support"] },
+      pro: { title: "Pro Engineer", price: "19€", period: "/mo", btn: "JETZT UPGRADEN", tag: "BELIEBT", features: ["Unbegrenzte Deploys", "GitHub + Netlify + Supabase", "AI Code Scan", "Priorisierte Warteschlange"] },
+      team: { title: "Agentur", price: "99€", period: "/mo", btn: "SALES KONTAKTIEREN", features: ["Alles in Pro", "5 Team Mitglieder", "White Label Dashboard", "Dedizierter Slack Channel"] }
+    }
+  }
+};
+
+// --- VISUAL COMPONENTS ---
+
+const StarField = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+    <div className="absolute inset-0 bg-slate-950"></div>
+    <div 
+      className="absolute top-0 left-0 w-full h-full from-indigo-900/40 via-slate-950 to-slate-950"
+      style={{ backgroundImage: 'radial-gradient(ellipse at top, var(--tw-gradient-stops))' }}
+    ></div>
+    {/* Grid Overlay */}
+    <div 
+      className="absolute inset-0"
+      style={{
+        backgroundImage: 'linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)',
+        backgroundSize: '50px 50px',
+        maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 100%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 100%)'
+      }}
+    ></div>
+  </div>
+);
+
+const GlowButton = ({ children, primary = false }) => (
+  <button className={`relative group px-8 py-4 rounded-lg font-mono font-bold tracking-wider uppercase transition-all duration-300 ${
+    primary 
+      ? 'bg-cyan-500 text-slate-950 hover:bg-cyan-400 hover:shadow-[0_0_40px_rgba(6,182,212,0.6)]' 
+      : 'bg-transparent border border-slate-700 text-slate-300 hover:border-cyan-500/50 hover:text-white hover:bg-slate-800/50'
+  }`}>
+    <span className="relative z-10 flex items-center gap-2">{children}</span>
+    {primary && <div className="absolute inset-0 rounded-lg bg-white/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>}
+  </button>
+);
+
+const FeatureCard = ({ icon: Icon, title, desc }) => (
+  <div className="group relative p-8 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-cyan-500/30 backdrop-blur-sm transition-all duration-500 hover:-translate-y-2">
+    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+    <div className="relative z-10">
+      <div className="w-14 h-14 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:border-cyan-500/50 transition-all duration-500">
+        <Icon className="w-7 h-7 text-cyan-400" />
+      </div>
+      <h3 className="text-xl font-bold text-white mb-3 font-mono">{title}</h3>
+      <p className="text-slate-400 leading-relaxed">{desc}</p>
+    </div>
+  </div>
+);
+
+const Stat = ({ val, label }) => (
+  <div className="text-center">
+    <div className="text-4xl md:text-5xl font-black text-white mb-2 tracking-tighter">{val}</div>
+    <div className="text-xs font-mono text-cyan-500 uppercase tracking-widest">{label}</div>
+  </div>
+);
+
+// --- MAIN PAGE ---
+
+const LandingPage = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [lang, setLang] = useState('en'); // Default to English for international
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const t = translations[lang]; // Shortcut for current language
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const toggleLang = () => {
+    setLang(prev => prev === 'en' ? 'de' : 'en');
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-cyan-500/30 selection:text-cyan-100 overflow-x-hidden">
+      <StarField />
+      
+      {/* Navigation */}
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b ${scrolled ? 'bg-slate-950/80 backdrop-blur-xl border-slate-800 py-4' : 'bg-transparent border-transparent py-6'}`}>
+        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+          <div className="flex items-center gap-2 font-black text-2xl tracking-tighter text-white">
+            <div className="w-8 h-8 bg-cyan-500 rounded flex items-center justify-center text-slate-950">
+              <Zap className="w-5 h-5 fill-current" />
+            </div>
+            ZIP<span className="text-cyan-500">SHIP</span>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-8 text-sm font-mono font-bold text-slate-400">
+            <a href="#features" className="hover:text-cyan-400 transition-colors">{t.nav.features}</a>
+            <a href="#protocol" className="hover:text-cyan-400 transition-colors">{t.nav.protocol}</a>
+            <a href="#pricing" className="hover:text-cyan-400 transition-colors">{t.nav.access}</a>
+          </div>
+
+          <div className="hidden md:flex items-center gap-4">
+            <button 
+              onClick={toggleLang}
+              className="flex items-center gap-2 px-3 py-2 rounded text-slate-400 hover:text-white hover:bg-slate-800/50 transition-colors text-xs font-mono font-bold"
+            >
+              <Globe className="w-4 h-4" />
+              {lang.toUpperCase()}
+            </button>
+            <button className="px-5 py-2 rounded border border-cyan-500/30 text-cyan-400 font-mono text-xs font-bold hover:bg-cyan-500/10 transition-all">
+              {t.nav.login}
+            </button>
+          </div>
+
+           {/* Mobile Menu Button */}
+           <div className="md:hidden flex items-center gap-4">
+             <button onClick={toggleLang} className="text-slate-400 text-xs font-mono font-bold">{lang.toUpperCase()}</button>
+             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-white">
+               {mobileMenuOpen ? <X /> : <Menu />}
+             </button>
+           </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-slate-950 border-b border-slate-800 p-6 flex flex-col gap-4 text-center animate-in slide-in-from-top-2">
+            <a href="#features" className="text-slate-300 font-bold" onClick={() => setMobileMenuOpen(false)}>{t.nav.features}</a>
+            <a href="#protocol" className="text-slate-300 font-bold" onClick={() => setMobileMenuOpen(false)}>{t.nav.protocol}</a>
+            <a href="#pricing" className="text-slate-300 font-bold" onClick={() => setMobileMenuOpen(false)}>{t.nav.access}</a>
+            <button className="text-cyan-400 font-bold">{t.nav.login}</button>
+          </div>
+        )}
+      </nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden">
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/50 border border-slate-700 text-cyan-400 text-xs font-mono mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            </span>
+            {t.hero.badge}
+          </div>
+          
+          <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6 leading-[0.9] animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+            {t.hero.title_1} <br className="hidden md:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-cyan-400 animate-gradient-x">{t.hero.title_2}</span>
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+            {t.hero.subtitle}
+          </p>
+          
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+            <GlowButton primary>
+              {t.hero.cta_primary} <ArrowRight className="w-4 h-4" />
+            </GlowButton>
+            <GlowButton>
+              {t.hero.cta_secondary}
+            </GlowButton>
+          </div>
+        </div>
+
+        {/* Abstract UI Mockup */}
+        <div className="mt-20 max-w-5xl mx-auto relative animate-in fade-in zoom-in duration-1000 delay-500">
+          <div className="absolute inset-0 bg-cyan-500 blur-[120px] opacity-20"></div>
+          <div className="relative rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl overflow-hidden aspect-video group">
+            <div className="absolute top-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-cyan-500"></div>
+            {/* Fake Dashboard UI */}
+            <div className="p-6 h-full flex flex-col items-center justify-center text-center">
+               <div className="w-24 h-24 rounded-full border-4 border-cyan-500 border-t-transparent animate-spin mb-6 mx-auto"></div>
+               <div className="font-mono text-cyan-500 text-xl tracking-widest">{t.ui_mock.status}</div>
+               <div className="mt-4 font-mono text-slate-500 text-sm">
+                  {t.ui_mock.step1}<br/>
+                  {t.ui_mock.step2}<br/>
+                  {t.ui_mock.step3}
+               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof / Stats */}
+      <section className="py-20 border-y border-slate-900 bg-slate-950/50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12">
+            <Stat val="12k+" label={t.stats.active} />
+            <Stat val="450k" label={t.stats.saved} />
+            <Stat val="99.9%" label={t.stats.uptime} />
+            <Stat val="0.3s" label={t.stats.latency} />
+          </div>
+          <div className="mt-16 text-center">
+            <p className="text-slate-500 font-mono text-xs uppercase tracking-widest mb-6">{t.trust}</p>
+            <div className="flex flex-wrap justify-center gap-12 opacity-40 grayscale">
+              {/* Fake Logos using Text for simplicity */}
+              <span className="text-2xl font-black text-white">ACME<span className="text-cyan-500">CORP</span></span>
+              <span className="text-2xl font-black text-white">CYBER<span className="text-purple-500">DYNE</span></span>
+              <span className="text-2xl font-black text-white">WAYLAND<span className="text-emerald-500">YUTANI</span></span>
+              <span className="text-2xl font-black text-white">MASSIVE<span className="text-white">DYNAMIC</span></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* The "Value" Section */}
+      <section id="features" className="py-32 px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-20">
+            <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+              {t.features.headline}
+            </h2>
+            <p className="text-slate-400 text-lg max-w-2xl">
+              {t.features.subhead}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FeatureCard icon={Cpu} title={t.features.cards[0].title} desc={t.features.cards[0].desc} />
+            <FeatureCard icon={Shield} title={t.features.cards[1].title} desc={t.features.cards[1].desc} />
+            <FeatureCard icon={Activity} title={t.features.cards[2].title} desc={t.features.cards[2].desc} />
+            <FeatureCard icon={Database} title={t.features.cards[3].title} desc={t.features.cards[3].desc} />
+            <FeatureCard icon={Globe} title={t.features.cards[4].title} desc={t.features.cards[4].desc} />
+            <FeatureCard icon={Code} title={t.features.cards[5].title} desc={t.features.cards[5].desc} />
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison / Authority Section */}
+      <section className="py-32 px-6 bg-slate-900/30 border-y border-slate-800">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+          <div>
+             <div className="inline-block px-3 py-1 rounded bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono font-bold mb-6">
+               {t.compare.old_badge}
+             </div>
+             <h3 className="text-3xl font-bold text-slate-300 mb-6">{t.compare.old_title}</h3>
+             <ul className="space-y-4 font-mono text-slate-500">
+                {t.compare.old_list.map((item, i) => (
+                  <li key={i} className="flex items-center gap-3"><span className="text-red-500">✕</span> {item}</li>
+                ))}
+             </ul>
+          </div>
+
+          <div className="relative">
+            <div className="absolute -inset-4 bg-cyan-500/20 blur-xl rounded-full"></div>
+            <div className="relative bg-slate-950 border border-slate-700 p-8 rounded-2xl">
+               <div className="inline-block px-3 py-1 rounded bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold mb-6">
+                 {t.compare.new_badge}
+               </div>
+               <h3 className="text-3xl font-bold text-white mb-6">{t.compare.new_title}</h3>
+               <ul className="space-y-4 font-mono text-slate-300">
+                 {t.compare.new_list.map((item, i) => (
+                   <li key={i} className="flex items-center gap-3"><Check className="w-5 h-5 text-cyan-400" /> {item}</li>
+                 ))}
+               </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-32 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-black text-white mb-4">{t.pricing.headline}</h2>
+            <p className="text-slate-400">{t.pricing.subhead}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Free Tier */}
+            <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/20 hover:bg-slate-900/40 transition-colors">
+              <h3 className="text-xl font-bold text-white mb-2">{t.pricing.free.title}</h3>
+              <div className="text-3xl font-black text-white mb-6">{t.pricing.free.price} <span className="text-sm font-normal text-slate-500">{t.pricing.free.period}</span></div>
+              <ul className="space-y-4 mb-8 text-sm text-slate-400">
+                {t.pricing.free.features.map((f, i) => (
+                  <li key={i} className="flex gap-2"><Check className="w-4 h-4 text-slate-600" /> {f}</li>
+                ))}
+              </ul>
+              <button className="w-full py-3 rounded border border-slate-700 text-white font-mono text-sm hover:bg-slate-800 transition-colors">{t.pricing.free.btn}</button>
+            </div>
+
+            {/* Pro Tier - Highlighted */}
+            <div className="relative p-8 rounded-2xl border border-cyan-500/50 bg-slate-900/80 shadow-[0_0_40px_rgba(6,182,212,0.1)] transform md:-translate-y-4">
+              <div className="absolute top-0 right-0 bg-cyan-500 text-slate-950 text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">{t.pricing.pro.tag}</div>
+              <h3 className="text-xl font-bold text-white mb-2">{t.pricing.pro.title}</h3>
+              <div className="text-3xl font-black text-cyan-400 mb-6">{t.pricing.pro.price} <span className="text-sm font-normal text-slate-500">{t.pricing.pro.period}</span></div>
+              <ul className="space-y-4 mb-8 text-sm text-slate-300">
+                {t.pricing.pro.features.map((f, i) => (
+                  <li key={i} className="flex gap-2"><Check className="w-4 h-4 text-cyan-400" /> {f}</li>
+                ))}
+              </ul>
+              <button className="w-full py-3 rounded bg-cyan-500 text-slate-950 font-bold font-mono text-sm hover:bg-cyan-400 transition-colors shadow-lg shadow-cyan-500/20">{t.pricing.pro.btn}</button>
+            </div>
+
+            {/* Team Tier */}
+            <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/20 hover:bg-slate-900/40 transition-colors">
+              <h3 className="text-xl font-bold text-white mb-2">{t.pricing.team.title}</h3>
+              <div className="text-3xl font-black text-white mb-6">{t.pricing.team.price} <span className="text-sm font-normal text-slate-500">{t.pricing.team.period}</span></div>
+              <ul className="space-y-4 mb-8 text-sm text-slate-400">
+                 {t.pricing.team.features.map((f, i) => (
+                  <li key={i} className="flex gap-2"><Check className="w-4 h-4 text-purple-500" /> {f}</li>
+                ))}
+              </ul>
+              <button className="w-full py-3 rounded border border-slate-700 text-white font-mono text-sm hover:bg-slate-800 transition-colors">{t.pricing.team.btn}</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-20 border-t border-slate-900 text-center">
+        <div className="flex items-center justify-center gap-2 font-black text-2xl tracking-tighter text-white mb-8">
+          <Zap className="w-6 h-6 fill-cyan-500 text-cyan-500" />
+          ZIP<span className="text-cyan-500">SHIP</span>
+        </div>
+        <div className="flex justify-center gap-8 text-sm text-slate-500 font-mono mb-8">
+          <a href="#" className="hover:text-white transition-colors">TERMS</a>
+          <a href="#" className="hover:text-white transition-colors">PRIVACY</a>
+          <a href="#" className="hover:text-white transition-colors">TWITTER</a>
+          <a href="#" className="hover:text-white transition-colors">GITHUB</a>
+        </div>
+        <p className="text-slate-600 text-xs">© 2050 ZipShip Technologies Inc. Built for the future.</p>
+      </footer>
+    </div>
+  );
+};
+
+export default LandingPage;

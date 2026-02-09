@@ -1,0 +1,44 @@
+2. Der "Trust-Gap" (Hier verlierst du Kunden)
+Ich sehe „Trusted by 12,000+ developers“ und Logos von Startups.
+
+Der Fehler: Sind das echte User? Wenn du gestern erst gelauncht hast, riecht das nach "Fake Social Proof". Entwickler sind skeptisch. Wenn sie merken, dass die Zahlen aufgeblasen sind, kaufen sie nie.
+
+Der Fix: Sei ehrlich oder nutze "Beta-Tester" Zahlen. Wenn du noch keine 12.000 hast, schreib lieber: "Join the 500+ early adopters rethinking deployment." Das wirkt exklusiver und ehrlicher.
+
+3. Das Preismodell (Gefährlich!)
+Du bietest "Unlimited Forever" für 29,99 € an.
+
+Der Fehler: Das ist ein wirtschaftlicher Selbstmord.
+
+Hosting kostet dich Geld (Traffic, Server). Wenn jemand für 30 € kauft und dann 5 Terabyte Traffic verursacht, bist du pleite.
+
+"Lifetime Deals" sind gut für schnelles Cash, aber töten dein SaaS langfristig.
+
+Der Fix: Begrenze das "Unlimited" (Fair Use Policy). Schreib ins Kleingedruckte: "Unlimited Projects, up to 100GB Bandwidth/month". Schütze dich selbst!
+
+4. Technische Analyse (Lighthouse & SEO)
+Headline: "DEPLOYMENT IS DEAD. LONG LIVE DEPLOYMENT."
+
+Kritik: Ein bisschen melodramatisch, aber okay für die Zielgruppe. Besser wäre eine konkrete Value-Prop: "Drag, Drop, Done. Deploy any Zip file in 30 seconds."
+
+Footer: Ich sehe Impressum, Datenschutz, AGB (Sehr gut! Das hast du umgesetzt).
+
+Performance: Die Seite wirkt schnell, der schwarze "Matrix-Look" passt zur Zielgruppe.
+
+5. Conversion-Killer im Detail
+Ich sehe den Bereich: "Get early access: Email address -> GET ACCESS" ganz unten.
+
+Der Fehler: Oben willst du verkaufen ("Deploy Now"), unten sammelst du E-Mails ("Get Access"). Was denn nun? Kann ich es nutzen oder muss ich warten?
+
+Der Fix: Wenn das Produkt fertig ist, kill die E-Mail-Box unten. Ersetze sie durch einen weiteren "Buy Button". E-Mail-Listen sind für Pre-Launch, Sales sind für jetzt.
+
+Zusammenfassung & Deine To-Do Liste
+Lifetime-Deal absichern: Füge sofort eine "Fair Use Policy" in die AGB ein, bevor der erste Power-User deine Server sprengt.
+
+Social Proof validieren: Wenn die 12.000 User nicht echt sind, nimm die Zahl runter. Nimm lieber echte Zitate von den 3 Leuten, die es getestet haben.
+
+Domain-Weiterleitung: Kaufe (wenn möglich) zipship.net oder ähnliches ohne Bindestriche und leite sie weiter, um Tippfehler abzufangen.
+
+Consistency: Entscheide dich: Ist es "Early Access" (Warteliste) oder "Live" (Kaufen)? Mischformen verwirren.
+
+Mein Urteil: Das Design ist solide ("Dark Mode Developer Vibe"). Die Copy ist aggressiv ("Old World vs. New World"). Wenn das Ding technisch funktioniert (also das Hochladen und Deployen wirklich klappt), hast du eine Chance. Aber pass auf dein "Unlimited"-Versprechen auf!

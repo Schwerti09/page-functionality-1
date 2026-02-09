@@ -1,0 +1,68 @@
+Wir müssen die Seite jetzt so anpassen, dass sie den Besucher in das neue Abo-Modell saugt.
+
+Hier sind die 3 Dinge, die du zwingend noch ändern musst, damit das Geld fließt und du professionell wirkst:
+
+1. Die "CTA" (Call to Action) Buttons ändern
+Aktuell steht da wahrscheinlich noch "Deploy Now" oder "Buy Single". Das schreckt ab, wenn wir jetzt ein Abo-Modell haben.
+
+Problem: Niemand zückt sofort die Kreditkarte für ein Abo bei einem unbekannten Tool.
+
+Lösung: Wir müssen die Hürde senken. Der Haupt-Button muss zum "Free Tier" führen.
+
+Änderung: Alle Haupt-Buttons ändern zu "Start for Free" oder "Deploy First Project".
+
+2. Social Proof "Fake-Check" (Vertrauen aufbauen)
+Auf der Seite stand: "Trusted by 12,000+ developers from Startups to Fortune 500s".
+
+Tacheles: Wenn das stimmt: Perfekt, lass es stehen.
+
+Wenn das Platzhalter-Zahlen sind: LÖSCHEN! Entwickler sind extrem skeptisch. Wenn sie merken, dass die Zahlen Fake sind (z.B. weil dein Copyright "2026" ist, aber die Domain neu wirkt), kaufen sie nichts.
+
+Besser: Schreib "Join the Early Access" oder "Be among the first 100 Pro Users". Ehrlichkeit konvertiert bei Devs besser als Fake-Hype.
+
+3. FAQ Sektion hinzufügen (Einwandbehandlung)
+Da du jetzt Abos verkaufst, haben Kunden andere Fragen als bei Einmalzahlungen. Du musst diese Fragen beantworten, bevor sie gestellt werden.
+
+Hier ist die Anweisung für den Replit Agent
+Kopiere das wieder direkt rein. Es kümmert sich um die CTAs, die FAQ und bereinigt die Claims.
+
+Instruction: Polish Landing Page for Subscription Model
+
+We have updated the pricing, now we need to align the landing page content to maximize conversions for the new SaaS model. Please perform the following 3 changes:
+
+1. Update ALL Call-to-Action (CTA) Buttons:
+
+Change the main hero button text from "Deploy Now" (or similar) to "Start for Free".
+
+Change the button in the navigation bar to "Dashboard" or "Login".
+
+Ensure the "Start for Free" button links to the registration/signup flow, not directly to a payment page.
+
+2. Add a "Frequently Asked Questions" (FAQ) Section: Insert a clean FAQ section just before the footer with these 4 items (crucial for closing subscriptions):
+
+Q: Can I use my own domain?
+
+A: Yes! Custom domains (yourname.com) are included in the Pro and Agency plans. We handle the SSL certificates automatically.
+
+Q: What happens if I stop paying?
+
+A: Your projects will be paused, but we keep your data for 30 days so you can reactivate anytime. You can always downgrade to the Free plan.
+
+Q: How do updates work?
+
+A: Just upload a new ZIP file. The system detects it's an update and deploys it instantly with zero downtime.
+
+Q: Is there a free trial for Pro?
+
+A: Yes, the Free Tier is your trial. It has no time limit. Upgrade to Pro whenever you need more projects or custom domains.
+
+3. Refine Trust Signals (Safety Check):
+
+If the "Trusted by 12,000+ developers" text is hardcoded or fake, replace it with: "Join the revolution. Zero configuration required."
+
+Remove "30-Day Money-Back Guarantee" (since we now have a Free Tier, this is redundant and confusing).
+
+Letzter Tipp vom "Senior-Chefentwickler" (Rechtliches & Sicherheit)
+Du wirst Hoster. Das ist gefährliches Terrain. Stell sicher, dass du in deinen AGB (Terms of Service) – die du hoffentlich hast oder generieren lässt – folgende Klausel drin hast:
+
+"No Crypto Mining & No Phishing": Du musst User sofort sperren können, die deine Server für Bitcoin-Mining oder illegale Seiten nutzen. Sonst sperrt dein Cloud-Provider (AWS/Hetzner/Vercel) DICH.

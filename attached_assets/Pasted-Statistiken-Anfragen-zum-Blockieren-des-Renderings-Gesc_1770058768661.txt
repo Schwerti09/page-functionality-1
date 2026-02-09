@@ -1,0 +1,88 @@
+Statistiken
+Anfragen zum Blockieren des Renderings Geschätzte Einsparung von 300 ms
+Anfragen blockieren das erste Rendering der Seite, was den LCP verzögern kann. Durch das Verschieben oder Einfügen können diese Netzwerkanfragen aus dem kritischen Pfad entfernt werden.LCPFCPNicht bewertet
+URL
+Übertragungsgröße
+Dauer
+zip-ship-revolution.com Eigene
+81,3 KiB	1.650 ms
+/assets/index-B4zL9MQt.css(zip-ship-revolution.com)
+81,3 KiB
+1.650 ms
+Erzwungener dynamischer Umbruch
+Ein erzwungener dynamischer Umbruch tritt auf, wenn JavaScript geometrische Eigenschaften (z. B. offsetWidth) abfragt, nachdem Stile durch eine Änderung des DOM-Status ungültig geworden sind. Dies kann zu einer schlechten Leistung führen. Weitere Informationen zu erzwungenen dynamischen Umbrüchen und möglichen Abhilfemaßnahmen.Nicht bewertet
+Top-Funktionsaufruf
+Gesamtzeit für dynamischen Umbruch
+/assets/index-CDIX6cCJ.js:3:10641(zip-ship-revolution.com)
+67 ms
+Quelle
+Gesamtzeit für dynamischen Umbruch
+/assets/index-CDIX6cCJ.js:9:191915(zip-ship-revolution.com)
+67 ms
+Netzwerkabhängigkeitsbaum
+Vermeide die Verkettung kritischer Anfragen, indem du die Ketten verkürzt, die Downloadgröße von Ressourcen reduzierst oder das Herunterladen unnötiger Ressourcen zurückstellst, um den Seitenaufbau zu beschleunigen.LCPNicht bewertet
+Maximale Latenz für kritischen Pfad: 1.030 ms
+Anfangsnavigation
+https://zip-ship-revolution.com - 200 ms, 6,92 KiB
+/assets/index-CDIX6cCJ.js(zip-ship-revolution.com) - 724 ms, 300,36 KiB
+…auth/user(zip-ship-revolution.com) - 1.030 ms, 0,42 KiB
+/assets/index-B4zL9MQt.css(zip-ship-revolution.com) - 506 ms, 81,27 KiB
+Vorverbundene Ursprünge
+Mit Hinweisen zu Vorverbindungen kann der Browser schon früher beim Seitenaufbau eine Verbindung herstellen. So wird beim ersten Anfordern dieses Ursprungs Zeit gespart. Zu den folgenden Ursprüngen hat die Seite bereits eine Vorverbindung hergestellt.
+es wurden keine Ursprünge vorverbunden
+Kandidaten für Vorverbindungen
+Füge deinen wichtigsten Ursprüngen Hinweise zu Vorverbindungen hinzu, verwende jedoch maximal vier.
+Keine weiteren Ursprünge eignen sich für die Vorverbindung
+Latenz der Dokumentanfrage Geschätzte Einsparung von 4 KiB
+Deine erste Netzwerkanfrage ist die wichtigste. Verringere die Latenz, indem du Weiterleitungen vermeidest, eine schnelle Serverantwort sicherstellst und die Textkomprimierung aktivierst.LCPFCPNicht bewertet
+Weiterleitungen werden vermieden
+Server antwortet schnell (1 ms gemessen)
+Keine Komprimierung angewendet
+LCP-Aufschlüsselung
+Für jeden Unterabschnitt gibt es spezifische Verbesserungsstrategien. Idealerweise sollte der Großteil der LCP-Zeit für das Laden der Ressourcen und nicht für Verzögerungen aufgewendet werden.LCPNicht bewertet
+Unterabschnitt
+Dauer
+Time to First Byte
+0 ms
+Verzögerung beim Rendering des Elements
+2.340 ms
+DRAG. DROP. DONE. ZIP TO GITHUB IN SECONDS.
+<h1 id="hero-title" class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white leading…">
+Drittanbieter
+Code von Drittanbietern kann die Ladegeschwindigkeit erheblich beeinträchtigen. Reduziere Drittanbietercode und stelle den Ladevorgang zurück, um die Inhalte deiner Seite zu priorisieren.Nicht bewertet
+Drittanbieter
+Übertragungsgröße
+Zeit im Hauptthread
+Google Fonts cdn 
+81 KiB	0 ms
+…v20/UcC73FwrK….woff2(fonts.gstatic.com)
+48 KiB
+0 ms
+…v24/tDbv2o-fl….woff2(fonts.gstatic.com)
+31 KiB
+0 ms
+/css2?family=…(fonts.googleapis.com)
+2 KiB
+0 ms
+Diese Statistiken sind auch im Bereich „Leistung“ der Chrome-Entwicklertools verfügbar – wenn du detailliertere Informationen erhalten möchtest, kannst du einen Trace aufzeichnen.
+Diagnose
+Reduziere nicht verwendetes JavaScript Geschätzte Einsparung von 118 KiB
+Um den Datenverbrauch durch Netzwerkaktivität zu senken, kannst du nicht verwendetes JavaScript reduzieren und das Laden von Skripts zurückstellen, bis sie benötigt werden. Informationen zum Reduzieren von nicht verwendetem JavaScript.LCPFCPNicht bewertet
+URL
+Übertragungsgröße
+Geschätzte Einsparungen
+zip-ship-revolution.com Eigene
+299,8 KiB	117,6 KiB
+/assets/index-CDIX6cCJ.js(zip-ship-revolution.com)
+299,8 KiB
+117,6 KiB
+Reduziere nicht verwendete CSS Geschätzte Einsparung von 65 KiB
+Du kannst ungültige Regeln in Stylesheets reduzieren und CSS-Code zurückstellen, der nicht für ohne Scrollen sichtbare Inhalte („above the fold“) verwendet wird, um den Datenverbrauch durch Netzwerkaktivität zu senken. Informationen zum Reduzieren von nicht verwendetem CSS-Code.LCPFCPNicht bewertet
+URL
+Übertragungsgröße
+Geschätzte Einsparungen
+zip-ship-revolution.com Eigene
+80,8 KiB	65,0 KiB
+/assets/index-B4zL9MQt.css(zip-ship-revolution.com)
+80,8 KiB
+65,0 KiB

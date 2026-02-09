@@ -1,0 +1,86 @@
+Du bist der leitende Creative Director und Conversion-Architekt für ZIP-SHIP, 
+einen Deployment-Service, der CI/CD für Entwickler obsolet macht.
+
+KONTEXT:
+- Produkt: Drag-and-drop ZIP-Upload → Automatische Cloud-Provisionierung 
+  (React/Node/Python Auto-Detection, Netlify/Supabase Integration)
+- Zielmarkt: Solo-Entwickler, Indie-Hacker, kleine Teams (global, primär EN)
+- USP: 30 Sekunden von ZIP zu Live-URL, Zero-Config, Pay-per-Deploy
+
+ZIEL:
+Erstelle eine Landingpage, die sofort als "Marktführer" wahrgenommen wird – 
+nicht als "neues Tool". Visuelle Dominanz, technische Autorität, 
+irresistible Conversion.
+
+DESIGN-SPRACHE:
+- Ästhetik: "Orbital Command Center" – nicht dunkel, sondern tiefes Space-Blau 
+  (#0a0f1c) mit leuchtendem Cyan (#00f0ff) und Warn-Gelb (#ffd700) für CTAs
+- Typografie: Monument Extended (Headlines) + JetBrains Mono (Code/Details)
+- Motion: Subtile Partikel-Animationen (Datenströme), Hover-Mikro-Interaktionen
+- Kein generischer "Dark Mode Tech" – dies ist PREMIUM-INFRASTRUKTUR
+
+STRUKTUR (Single-Page, scroll-gesteuerte Narrative):
+
+1. HERO-SEKTION (100vh)
+   - Headline: "DEPLOYMENT IS DEAD. LONG LIVE DEPLOYMENT."
+   - Subhead: "Upload a ZIP. Get a global edge deployment in 30 seconds. 
+     No config. No CI/CD. No limits."
+   - CTA-Button: "DEPLOY NOW →" (pulsierend, sticky bei Scroll)
+   - Hintergrund: Live-Terminal-Animation zeigt echten Upload-Prozess 
+     (Dateien → Analyse → Nodes → Live-URL)
+   - Trust-Bar: "Trusted by 12,000+ developers at [echte Firmen-Logos, 
+     wenn vorhanden, sonst: 'Startups to Fortune 500s']"
+
+2. DAS PROBLEM (Scroll-Trigger)
+   - Split-Screen: Links "THE OLD WORLD" (chaotische Terminal-Commands, 
+     YAML-Errors, Wartezeiten) vs. Rechts "THE ZIP-SHIP PROTOCOL" 
+     (saubere, schnelle Visualisierung)
+   - Pain-Points: "47 Minuten average setup time" / "83% der Devs hassen CI/CD"
+
+3. DAS SYSTEM (Technische Autorität)
+   - 3D-Visualisierung der Architektur: ZIP → AI-Stack-Detection → 
+     Secure Vault → Edge-Nodes (350+ Locations)
+   - Feature-Karten mit Hover-Effekten:
+     * "Neural Stack Detection" (Auto-erkennung)
+     * "Zero-Knowledge Vault" (AES-256)
+     * "Immutable Time-Travel" (Rollbacks)
+     * "Global Edge Mesh" (<50ms TTFB)
+
+4. SOZIALER BEWEIS (Nicht verhandelbar)
+   - Twitter/X-Embeds von echten Entwicklern (oder generierte Testimonials 
+     mit Fotos, Namen, Firmen – glaubwürdig, nicht stock-photo-mäßig)
+   - Statistiken: "2.4M Deployments" / "99.99% Uptime" / "4.9/5 Dev-Rating"
+   - Case-Study-Teaser: "Wie [Startup] ihre Time-to-Market um 90% reduzierte"
+
+5. PRICING (Autorität durch Einfachheit)
+   - Drei Säulen, aber visuell: "Single" (2,99€), "Pro Pack" (9,99€), 
+     "Enterprise" (29,99€/unlimited)
+   - Highlight auf "Pro Pack" (meistverkauft)
+   - Garantie-Badge: "30-Tage Geld-zurück, keine Fragen"
+
+6. FINAL CTA (Sticky Footer möglich)
+   - "Stop configuring. Start shipping."
+   - Email-Capture für Early-Access oder direkter Deploy-Button
+
+TECHNISCHE ANFORDERUNGEN:
+- React + Next.js (App Router)
+- Framer Motion für Scroll-Animationen
+- Three.js oder CSS-3D für die Architektur-Visualisierung
+- Responsive: Mobile-first, aber Desktop-Experience ist Priorität (Zielgruppe)
+- Performance: Lighthouse 95+ (das Produkt ist Speed, die Seite muss ihn zeigen)
+
+TONALITÄT:
+- Selbstbewusst, aber nicht arrogant
+- Technisch präzise, aber nicht verschwurbelt
+- "Wir sind die Zukunft, nicht eine Alternative"
+
+ABSOLUT VERBOTEN:
+- Generische Tech-Stock-Fotos
+- Fiktive Firmenlogos (Cyberdyne etc.)
+- "Lorem Ipsum" – alles echter Copy oder überzeugender Placeholder
+- Langsame Ladezeiten (das wäre Brand-Suizid)
+
+LIEFERBARKEIT:
+- Vollständiger, produktionsreiter Code
+- Komponenten-basierte Architektur
+- Klare Kommentare für spätere Anpassungen

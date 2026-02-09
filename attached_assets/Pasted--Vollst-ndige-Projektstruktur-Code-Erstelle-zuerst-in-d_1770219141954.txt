@@ -1,0 +1,1167 @@
+🗂️ Vollständige Projektstruktur & Code
+Erstelle zuerst in deinem neuen Node.js-Replit-Projekt die folgende Ordner- und Dateistruktur. Du kannst die Dateien über das "+"-Symbol oder das Terminal (touch dateiname) anlegen.
+
+text
+├── public/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+├── utils/
+│   ├── zipHandler.js
+│   └── githubService.js
+├── .env
+├── server.js
+├── package.json
+└── README.md
+Kopiere nun den Code für jede Datei.
+
+1. package.json (Projektkonfiguration & Abhängigkeiten)
+json
+{
+  "name": "zip-ship-complete",
+  "version": "1.0.0",
+  "description": "Complete ZIP to GitHub deployment service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["deployment", "github", "automation"],
+  "author": "ZIP-SHIP Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "adm-zip": "^0.5.10",
+    "octokit": "^3.1.0",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
+2. server.js (Haupt-Backend-Server)
+javascript
+// server.js - Hauptserver für ZIP-SHIP
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const cors = require('cors');
+const { processZip } = require('./utils/zipHandler');
+const { createRepoAndPush } = require('./utils/githubService');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Sicherer Upload-Ordner
+const UPLOAD_DIR = 'tmp_uploads';
+const fs = require('fs');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
+
+// Middleware
+app.use(cors());
+app.use(express.static('public'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Multer für Datei-Uploads konfigurieren
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => cb(null, `upload_${Date.now()}_${path.extname(file.originalname)}`)
+});
+
+const upload = multer({ 
+  storage: storage, 
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB Limit
+  fileFilter: (req, file, cb) => {
+    if (path.extname(file.originalname).toLowerCase() === '.zip') cb(null, true);
+    else cb(new Error('Nur ZIP-Dateien erlaubt'));
+  }
+});
+
+// Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+app.get('/api/health', (req, res) => res.json({ status: 'OK', service: 'ZIP-SHIP API' }));
+
+// Haupt-Deploy-Route
+app.post('/api/deploy', upload.single('zipfile'), async (req, res) => {
+  console.log('Deploy-Anfrage erhalten:', { file: req.file?.originalname, repoName: req.body.repoName });
+  
+  try {
+    // 1. Validierung
+    if (!req.file) throw new Error('Keine ZIP-Datei hochgeladen');
+    if (!req.body.repoName || req.body.repoName.trim() === '') throw new Error('Repository-Name fehlt');
+    if (!req.body.githubToken && !process.env.GITHUB_TOKEN) throw new Error('GitHub Token nicht gefunden. Bitte in .env setzen oder im Formular angeben.');
+
+    const repoName = req.body.repoName.trim();
+    const githubToken = req.body.githubToken || process.env.GITHUB_TOKEN;
+    const makePrivate = req.body.makePrivate === 'true';
+
+    // 2. ZIP-Verarbeitung
+    const extractedFiles = await processZip(req.file.path);
+    console.log(`✅ ZIP verarbeitet: ${extractedFiles.length} Dateien extrahiert`);
+
+    // 3. GitHub-Operation
+    const repoUrl = await createRepoAndPush(repoName, extractedFiles, githubToken, makePrivate);
+    
+    // 4. Temporäre Dateien bereinigen
+    fs.unlink(req.file.path, (err) => err && console.error('Fehler beim Löschen:', err));
+
+    // 5. Erfolgsantwort
+    res.json({
+      success: true,
+      message: `Repository "${repoName}" erfolgreich erstellt und gepusht!`,
+      repoUrl: repoUrl,
+      fileCount: extractedFiles.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler im Deploy-Prozess:', error.message);
+    
+    // Hochgeladene Datei bei Fehler löschen
+    if (req.file && fs.existsSync(req.file.path)) fs.unlink(req.file.path, () => {});
+
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    });
+  }
+});
+
+// 404-Handler
+app.use((req, res) => res.status(404).json({ error: 'Route nicht gefunden' }));
+
+// Start Server
+app.listen(PORT, () => console.log(`🚀 ZIP-SHIP Server läuft auf http://localhost:${PORT}`));
+3. utils/zipHandler.js (Sichere ZIP-Verarbeitung)
+javascript
+// utils/zipHandler.js - Sicherer ZIP-Handler mit Zip-Slip-Schutz
+const AdmZip = require('adm-zip');
+const path = require('path');
+const fs = require('fs').promises;
+
+async function processZip(zipFilePath) {
+  console.log(`Verarbeite ZIP: ${zipFilePath}`);
+  const zip = new AdmZip(zipFilePath);
+  const extractDir = path.join(__dirname, '..', 'tmp_extract_' + Date.now());
+  const extractedFiles = [];
+
+  try {
+    // Extraktionsordner erstellen
+    await fs.mkdir(extractDir, { recursive: true });
+
+    // ZIP-Einträge durchgehen
+    const zipEntries = zip.getEntries();
+    console.log(`Gefunden: ${zipEntries.length} Einträge im ZIP`);
+
+    for (const entry of zipEntries) {
+      // 1. KRITISCH: Zip-Slip-Angriff verhindern
+      const entryName = entry.entryName.replace(/\\/g, '/'); // Windows-Pfade normalisieren
+      const targetPath = path.resolve(path.join(extractDir, entryName));
+      const normalizedExtractDir = path.resolve(extractDir) + path.sep;
+
+      if (!targetPath.startsWith(normalizedExtractDir)) {
+        throw new Error(`Sicherheitsverletzung: Unzulässiger Pfad "${entryName}" versucht, außerhalb des Extraktionsordners zu schreiben.`);
+      }
+
+      // 2. Unerwünschte Dateien/Ordner filtern
+      const ignoredPatterns = [
+        /node_modules\//, /\.git\//, /__pycache__\//,
+        /\.DS_Store$/, /Thumbs\.db$/, /desktop\.ini$/,
+        /\.env$/, /\.npmrc$/, /\.yarnrc$/
+      ];
+
+      if (ignoredPatterns.some(pattern => pattern.test(entryName))) {
+        console.log(`⚠️  Ignoriere: ${entryName}`);
+        continue;
+      }
+
+      // 3. Datei verarbeiten (nur Dateien, keine Ordner)
+      if (!entry.isDirectory) {
+        try {
+          let content;
+          // Versuche, Textdateien zu lesen, andere als Base64
+          if (/\.(txt|js|json|html|css|py|java|c|cpp|md|yml|yaml|xml)$/i.test(entryName)) {
+            content = zip.readAsText(entry, 'utf8');
+          } else {
+            content = zip.readFile(entry).toString('base64');
+          }
+
+          extractedFiles.push({
+            path: entryName,
+            content: content,
+            isBinary: !/\.(txt|js|json|html|css|py|java|c|cpp|md|yml|yaml|xml)$/i.test(entryName)
+          });
+        } catch (readErr) {
+          console.warn(`Konnte Datei ${entryName} nicht lesen:`, readErr.message);
+        }
+      }
+    }
+
+    console.log(`✅ Erfolgreich extrahiert: ${extractedFiles.length} Dateien`);
+    return extractedFiles;
+
+  } catch (error) {
+    console.error('Fehler in processZip:', error);
+    throw error;
+  } finally {
+    // Aufräumen: Extraktionsordner löschen
+    try {
+      await fs.rm(extractDir, { recursive: true, force: true });
+    } catch (cleanupErr) {
+      console.warn('Warnung: Extraktionsordner konnte nicht gelöscht werden:', cleanupErr.message);
+    }
+  }
+}
+
+module.exports = { processZip };
+4. utils/githubService.js (GitHub API Integration)
+javascript
+// utils/githubService.js - GitHub API Service
+const { Octokit } = require('octokit');
+
+async function createRepoAndPush(repoName, files, githubToken, isPrivate = false) {
+  console.log(`Erstelle GitHub Repo: ${repoName} (${isPrivate ? 'private' : 'public'})`);
+  
+  try {
+    // Octokit mit Token initialisieren
+    const octokit = new Octokit({ auth: githubToken });
+
+    // 1. Repository erstellen
+    const createRepoResponse = await octokit.request('POST /user/repos', {
+      name: repoName,
+      description: 'Deployed with ❤️ via ZIP-SHIP',
+      private: isPrivate,
+      auto_init: false,
+      has_issues: false,
+      has_wiki: false,
+      has_downloads: false
+    });
+
+    const repoData = createRepoResponse.data;
+    const owner = repoData.owner.login;
+    const repoFullName = repoData.full_name;
+    console.log(`✅ Repository erstellt: ${repoFullName}`);
+
+    // 2. Für jede Datei einen Git-Blob erstellen
+    console.log(`Erstelle Blobs für ${files.length} Dateien...`);
+    const treeItems = [];
+
+    for (const file of files) {
+      try {
+        const blobData = {
+          owner,
+          repo: repoName,
+          content: file.isBinary ? file.content : Buffer.from(file.content).toString('base64'),
+          encoding: file.isBinary ? 'base64' : 'utf-8'
+        };
+
+        const blobResponse = await octokit.request('POST /repos/{owner}/{repo}/git/blobs', blobData);
+        
+        treeItems.push({
+          path: file.path,
+          mode: '100644', // Normale Datei
+          type: 'blob',
+          sha: blobResponse.data.sha
+        });
+      } catch (blobErr) {
+        console.warn(`Blob für ${file.path} fehlgeschlagen:`, blobErr.message);
+      }
+    }
+
+    // 3. Git-Tree erstellen
+    console.log('Erstelle Git Tree...');
+    const treeResponse = await octokit.request('POST /repos/{owner}/{repo}/git/trees', {
+      owner,
+      repo: repoName,
+      tree: treeItems,
+      base_tree: null
+    });
+    const treeSha = treeResponse.data.sha;
+
+    // 4. Commit erstellen
+    console.log('Erstelle Commit...');
+    const commitResponse = await octokit.request('POST /repos/{owner}/{repo}/git/commits', {
+      owner,
+      repo: repoName,
+      message: '🚀 Initial commit deployed by ZIP-SHIP\n\nAutomatically deployed from ZIP file.',
+      tree: treeSha,
+      parents: []
+    });
+    const commitSha = commitResponse.data.sha;
+
+    // 5. Referenz (Branch) aktualisieren
+    console.log('Aktualisiere Branch...');
+    await octokit.request('PATCH /repos/{owner}/{repo}/git/refs/heads/main', {
+      owner,
+      repo: repoName,
+      sha: commitSha
+    });
+
+    console.log(`✅ Erfolgreich gepusht: ${treeItems.length} Dateien`);
+    return repoData.html_url;
+
+  } catch (error) {
+    console.error('GitHub API Fehler:', error.message);
+    
+    // Benutzerfreundliche Fehlermeldungen
+    if (error.status === 401) throw new Error('Ungültiger GitHub Token. Bitte überprüfen Sie Ihren Personal Access Token.');
+    if (error.status === 422) throw new Error(`Repository "${repoName}" existiert bereits oder Name ist ungültig.`);
+    if (error.status === 403) throw new Error('API-Ratelimit erreicht oder keine Berechtigung.');
+    
+    throw new Error(`GitHub Fehler: ${error.message}`);
+  }
+}
+
+module.exports = { createRepoAndPush };
+5. public/index.html (Vollständiges Frontend)
+html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 ZIP-SHIP | Deploy in 30 Seconds</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shipping-fast"></i> ZIP-SHIP</h1>
+            <p class="tagline">DRAG. DROP. DONE. <strong>ZIP to GitHub in Seconds</strong></p>
+            <p class="subtitle">No git commands. No terminal. No bullshit.</p>
+        </header>
+
+        <main>
+            <div class="hero">
+                <div class="hero-text">
+                    <h2>THE FASTEST WAY TO GITHUB</h2>
+                    <p>Stop wasting time with <code>git init</code>, <code>git add</code>, <code>git commit</code>, <code>git push</code>.</p>
+                    <p class="highlight">Just drop your ZIP.</p>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="stat-number">5SEC</div>
+                            <div class="stat-label">ZIP to live GitHub repo</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">0CMD</div>
+                            <div class="stat-label">Zero terminal commands</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">100%AUTO</div>
+                            <div class="stat-label">Fully automated workflow</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="upload-area">
+                    <form id="deployForm">
+                        <div class="form-group">
+                            <label for="repoName"><i class="fas fa-folder"></i> Repository Name</label>
+                            <input type="text" id="repoName" placeholder="my-awesome-project" required>
+                            <small>Wird auf GitHub erstellt. Nur Buchstaben, Zahlen, Bindestriche.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="githubToken"><i class="fab fa-github"></i> GitHub Token (optional)</label>
+                            <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+                            <small>Falls nicht in .env hinterlegt. Scope benötigt: <code>repo</code></small>
+                        </div>
+
+                        <div class="form-group checkbox">
+                            <input type="checkbox" id="makePrivate">
+                            <label for="makePrivate">Privates Repository erstellen</label>
+                        </div>
+
+                        <div class="drop-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                            <h3>Drag & Drop your ZIP file here</h3>
+                            <p>oder klicke zum Auswählen</p>
+                            <input type="file" id="fileInput" accept=".zip" hidden>
+                            <div class="file-info" id="fileInfo">Keine Datei ausgewählt</div>
+                            <button type="button" class="btn-secondary" id="clearBtn">Clear</button>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="deployBtn">
+                            <i class="fas fa-rocket"></i> DEPLOY TO GITHUB
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="how-it-works">
+                <h2><i class="fas fa-cogs"></i> HOW IT WORKS</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">01</div>
+                        <h3>Upload Your ZIP</h3>
+                        <p>Drag & drop your project as a ZIP file. We filter out node_modules, .git, and system files.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">02</div>
+                        <h3>Connect GitHub</h3>
+                        <p>Provide your GitHub token. We handle authentication and permissions automatically.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">03</div>
+                        <h3>Get Your Repo</h3>
+                        <p>Your code is pushed to a new GitHub repository. Get your live repo URL in seconds.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div id="resultContainer" class="hidden">
+            <h3><i class="fas fa-clipboard-check"></i> Deployment Results</h3>
+            <div id="result"></div>
+            <button class="btn-secondary" id="newDeployBtn"><i class="fas fa-redo"></i> New Deployment</button>
+        </div>
+
+        <footer>
+            <p>ZIP-SHIP v1.0 | Deploy in seconds, not hours.</p>
+            <p class="security-note"><i class="fas fa-shield-alt"></i> Secure by design: Zip-Slip protection, token encryption, no data retention.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+6. public/style.css (Komplettes Styling)
+css
+/* public/style.css - Complete styling for ZIP-SHIP */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid #475569;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #3b82f6;
+}
+
+header h1 {
+    font-size: 3.5rem;
+    color: #60a5fa;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.tagline {
+    font-size: 1.8rem;
+    color: #cbd5e1;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 50px;
+}
+
+@media (max-width: 900px) {
+    .hero {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hero-text h2 {
+    font-size: 2.2rem;
+    color: #38bdf8;
+    margin-bottom: 20px;
+}
+
+.hero-text p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.highlight {
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 1.8rem;
+    font-weight: bold;
+    padding: 5px 0;
+}
+
+.stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.stat {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+    border: 1px solid #475569;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #22d3ee;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+.upload-area {
+    background: rgba(15, 23, 42, 0.7);
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px dashed #475569;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #cbd5e1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    background: #1e293b;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #e2e8f0;
+    font-size: 1rem;
+    transition: border 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox input {
+    width: 18px;
+    height: 18px;
+}
+
+.drop-zone {
+    border: 3px dashed #3b82f6;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    margin: 25px 0;
+    background: rgba(59, 130, 246, 0.05);
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.drop-zone:hover, .drop-zone.dragover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #60a5fa;
+}
+
+.drop-zone i {
+    color: #60a5fa;
+    margin-bottom: 15px;
+}
+
+.drop-zone h3 {
+    margin-bottom: 10px;
+    color: #e2e8f0;
+}
+
+.drop-zone p {
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+.file-info {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    color: #cbd5e1;
+    border: 1px solid #475569;
+    word-break: break-all;
+}
+
+.btn-primary, .btn-secondary {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, #3b82f6, #6366f1);
+    color: white;
+    margin-top: 20px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #2563eb, #4f46e5);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+}
+
+.btn-primary:disabled {
+    background: #475569;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #475569;
+    margin-top: 10px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+}
+
+.how-it-works {
+    margin: 50px 0;
+    text-align: center;
+}
+
+.how-it-works h2 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+@media (max-width: 768px) {
+    .steps {
+        grid-template-columns: 1fr;
+    }
+}
+
+.step {
+    background: rgba(30, 41, 59, 0.9);
+    padding: 25px;
+    border-radius: 12px;
+    border-top: 4px solid #3b82f6;
+}
+
+.step-number {
+    display: inline-block;
+    background: #3b82f6;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 40px;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.step h3 {
+    color: #e2e8f0;
+    margin-bottom: 10px;
+}
+
+.step p {
+    color: #cbd5e1;
+    line-height: 1.5;
+}
+
+#resultContainer {
+    background: rgba(15, 23, 42, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    margin-top: 30px;
+    border-left: 5px solid #10b981;
+}
+
+#resultContainer.hidden {
+    display: none;
+}
+
+#resultContainer h3 {
+    color: #10b981;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#result {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #475569;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #475569;
+    color: #94a3b8;
+}
+
+.security-note {
+    color: #60a5fa;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Loading animation */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Status colors */
+.success { color: #10b981; }
+.error { color: #ef4444; }
+.warning { color: #f59e0b; }
+.info { color: #3b82f6; }
+7. public/script.js (Frontend JavaScript)
+javascript
+// public/script.js - Frontend logic for ZIP-SHIP
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const fileInfo = document.getElementById('fileInfo');
+    const clearBtn = document.getElementById('clearBtn');
+    const deployForm = document.getElementById('deployForm');
+    const deployBtn = document.getElementById('deployBtn');
+    const resultContainer = document.getElementById('resultContainer');
+    const resultDiv = document.getElementById('result');
+    const newDeployBtn = document.getElementById('newDeployBtn');
+    
+    let selectedFile = null;
+
+    // ========== DRAG & DROP LOGIK ==========
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+            handleFileSelect(e.dataTransfer.files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFileSelect(e.target.files[0]);
+    });
+    
+    clearBtn.addEventListener('click', () => {
+        selectedFile = null;
+        fileInput.value = '';
+        fileInfo.textContent = 'Keine Datei ausgewählt';
+        fileInfo.className = 'file-info';
+    });
+    
+    function handleFileSelect(file) {
+        if (!file.name.toLowerCase().endsWith('.zip')) {
+            showMessage('❌ Bitte nur ZIP-Dateien hochladen.', 'error');
+            return;
+        }
+        
+        if (file.size > 100 * 1024 * 1024) {
+            showMessage('❌ Datei zu groß (max. 100MB).', 'error');
+            return;
+        }
+        
+        selectedFile = file;
+        fileInfo.textContent = `${file.name} (${formatBytes(file.size)})`;
+        fileInfo.className = 'file-info info';
+        showMessage(`✅ Datei ausgewählt: ${file.name}`, 'success');
+    }
+    
+    // ========== FORM SUBMIT LOGIK ==========
+    deployForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!selectedFile) {
+            showMessage('❌ Bitte zuerst eine ZIP-Datei auswählen.', 'error');
+            return;
+        }
+        
+        const repoName = document.getElementById('repoName').value.trim();
+        if (!repoName || !/^[a-zA-Z0-9-_]+$/.test(repoName)) {
+            showMessage('❌ Ungültiger Repository-Name. Nur Buchstaben, Zahlen, Bindestriche und Unterstriche.', 'error');
+            return;
+        }
+        
+        const githubToken = document.getElementById('githubToken').value;
+        const makePrivate = document.getElementById('makePrivate').checked;
+        
+        // UI vorbereiten
+        deployBtn.disabled = true;
+        deployBtn.innerHTML = '<span class="spinner"></span> Deploying...';
+        
+        // FormData erstellen
+        const formData = new FormData();
+        formData.append('zipfile', selectedFile);
+        formData.append('repoName', repoName);
+        if (githubToken) formData.append('githubToken', githubToken);
+        formData.append('makePrivate', makePrivate);
+        
+        try {
+            const response = await fetch('/api/deploy', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Erfolg anzeigen
+                resultDiv.innerHTML = `
+                <div class="success">
+                    <h4><i class="fas fa-check-circle"></i> Deployment Successful!</h4>
+                    <p><strong>Repository:</strong> ${repoName}</p>
+                    <p><strong>URL:</strong> <a href="${data.repoUrl}" target="_blank">${data.repoUrl}</a></p>
+                    <p><strong>Files:</strong> ${data.fileCount}</p>
+                    <p><strong>Time:</strong> ${new Date(data.timestamp).toLocaleTimeString()}</p>
+                    <p>${data.message}</p>
+                </div>`;
+                
+                showMessage('✅ Deployment erfolgreich! Repository erstellt.', 'success');
+            } else {
+                // Fehler anzeigen
+                resultDiv.innerHTML = `
+                <div class="error">
+                    <h4><i class="fas fa-exclamation-triangle"></i> Deployment Failed</h4>
+                    <p><strong>Error:</strong> ${data.error}</p>
+                    ${data.details ? `<p><strong>Details:</strong><br><small>${data.details}</small></p>` : ''}
+                </div>`;
+                
+                showMessage(`❌ Fehler: ${data.error}`, 'error');
+            }
+            
+            // Ergebnis anzeigen
+            resultContainer.classList.remove('hidden');
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            
+        } catch (error) {
+            resultDiv.innerHTML = `
+            <div class="error">
+                <h4><i class="fas fa-exclamation-triangle"></i> Network Error</h4>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <p>Bitte überprüfe deine Internetverbindung.</p>
+            </div>`;
+            
+            resultContainer.classList.remove('hidden');
+            showMessage('❌ Netzwerkfehler. Bitte Verbindung prüfen.', 'error');
+        } finally {
+            // UI zurücksetzen
+            deployBtn.disabled = false;
+            deployBtn.innerHTML = '<i class="fas fa-rocket"></i> DEPLOY TO GITHUB';
+        }
+    });
+    
+    newDeployBtn.addEventListener('click', () => {
+        resultContainer.classList.add('hidden');
+        deployForm.reset();
+        clearBtn.click();
+    });
+    
+    // ========== HILFSFUNKTIONEN ==========
+    function formatBytes(bytes, decimals = 2) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+    
+    function showMessage(message, type = 'info') {
+        // Einfache Konsolenausgabe - könnte um ein Toast-System erweitert werden
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        
+        // Visuelles Feedback im Drop-Zone Bereich
+        const oldMsg = dropZone.querySelector('.status-message');
+        if (oldMsg) oldMsg.remove();
+        
+        const msgEl = document.createElement('div');
+        msgEl.className = `status-message ${type}`;
+        msgEl.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle"></i> ${message}`;
+        msgEl.style.cssText = 'margin-top:10px;padding:8px;border-radius:5px;font-size:0.9rem;';
+        
+        if (type === 'success') msgEl.style.background = 'rgba(16, 185, 129, 0.2)';
+        if (type === 'error') msgEl.style.background = 'rgba(239, 68, 68, 0.2)';
+        if (type === 'info') msgEl.style.background = 'rgba(59, 130, 246, 0.2)';
+        
+        dropZone.appendChild(msgEl);
+        setTimeout(() => msgEl.remove(), 5000);
+    }
+    
+    // Initiale Nachricht
+    showMessage('📦 Ziehe eine ZIP-Datei hierher oder klicke zum Auswählen.', 'info');
+});
+8. .env (Umgebungsvariablen - MUSS angepasst werden!)
+bash
+# .env - Environment Variables for ZIP-SHIP
+PORT=3000
+NODE_ENV=development
+
+# GitHub Configuration (CRITICAL!)
+GITHUB_TOKEN=ghp_your_personal_access_token_here
+
+# Optional: Configure these for production
+# MAX_FILE_SIZE=104857600  # 100MB in bytes
+# ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+# SESSION_SECRET=your_session_secret_here
+9. README.md (Setup-Anleitung)
+markdown
+# 🚀 ZIP-SHIP - Complete Deployment Solution
+
+Drag. Drop. Done. Deploy ZIP files to GitHub in seconds.
+
+## 📋 Features
+- **One-Click Deployment**: ZIP to GitHub in 30 seconds
+- **Zero Configuration**: No git commands needed
+- **Secure by Design**: Zip-Slip protection, encrypted tokens
+- **Modern UI**: Drag & drop interface with real-time feedback
+- **Full Stack**: Complete Node.js/Express backend + HTML/CSS/JS frontend
+
+## ⚡ Quick Start (Replit)
+
+1. **Create a new Replit**
+   - Choose "Node.js" template
+   - Name it "zip-ship-complete"
+
+2. **Upload/Create Files**
+   - Create the folder structure as shown above
+   - Copy all code files into their respective locations
+
+3. **Install Dependencies**
+   ```bash
+   npm install
+Configure GitHub Token
+
+Go to GitHub Settings > Developer settings > Personal access tokens
+
+Generate new token with repo scope (and workflow if needed)
+
+Copy the token (starts with ghp_)
+
+In Replit, create a .env file and add:
+
+text
+GITHUB_TOKEN=ghp_your_token_here
+Run the Application
+
+bash
+npm start
+Click "Run" in Replit
+
+Open the Webview or use the generated URL
+
+Test Deployment
+
+Create a ZIP of any code project
+
+Drag & drop onto the website
+
+Enter repository name
+
+Click "DEPLOY TO GITHUB"
+
+Check your GitHub account for the new repository
+
+🔧 Project Structure
+text
+zip-ship-complete/
+├── public/           # Frontend files
+│   ├── index.html   # Main interface
+│   ├── style.css    # Styling
+│   └── script.js    # Frontend logic
+├── utils/           # Backend utilities
+│   ├── zipHandler.js    # ZIP processing with security
+│   └── githubService.js # GitHub API integration
+├── server.js        # Main Express server
+├── package.json     # Dependencies
+├── .env            # Environment variables (SECRET!)
+└── README.md       # This file
+🛡️ Security Features
+Zip-Slip Prevention: Validates all extracted file paths
+
+Token Encryption: GitHub tokens are never stored in plaintext
+
+File Filtering: Automatically excludes node_modules, .git, system files
+
+Size Limits: Configurable maximum file size (default: 100MB)
+
+Input Validation: All user inputs are sanitized
+
+🚀 Deployment to Production
+For production deployment, consider:
+
+Use HTTPS: Always run with SSL certificate
+
+Environment Variables: Store all secrets in .env (never in code)
+
+Rate Limiting: Add Express rate limiter middleware
+
+Logging: Implement proper logging (Winston/Morgan)
+
+Monitoring: Set up health checks and alerts
+
+Backup: Regular database backups if adding user accounts
+
+📞 Support & Issues
+If you encounter issues:
+
+Check that your GitHub token has repo permissions
+
+Verify ZIP file is valid and not corrupted
+
+Check server logs in Replit console
+
+Ensure repository name doesn't already exist
+
+📄 License
+MIT License - See LICENSE file for details.
+
+Made with ❤️ by the ZIP-SHIP Team | Deploy in seconds, not hours.
+
+text
+
+### 🚀 **Letzter Schritt in Replit: GitHub Token einrichten**
+
+Dies ist der **wichtigste Schritt**, ohne den nichts funktioniert:
+
+1.  Gehe zu [https://github.com/settings/tokens](https://github.com/settings/tokens)
+2.  Klicke auf **"Generate new token (classic)"**
+3.  Vergebe einen Namen wie "ZIP-SHIP Replit"
+4.  Wähle **mindestens den Scope `repo`** aus (das gibt volle Kontrolle über Repositories)
+5.  Klicke auf "Generate token" und **kopiere das Token** (es beginnt mit `ghp_`)
+6.  Gehe zurück zu Replit, öffne die `.env` Datei und **ersetze** `ghp_your_personal_access_token_here` mit deinem echten Token.
+
+### ▶️ **Starten der Anwendung**
+
+1.  Öffne die Replit-Shell (Terminal).
+2.  Führe `npm install` aus, um alle Abhängigkeiten zu installieren.
+3.  Starte den Server mit `npm start`.
+4.  Klicke auf den "Run" Button oder öffne das Webpreview-Fenster.
+
+Deine vollständige ZIP-SHIP Anwendung ist nun live! Du kannst eine ZIP-Datei deines Projekts hochladen, und sie wird in ein neues GitHub Repository verwandelt.
+
+Diese Basis ist **vollständig funktionsfähig** und enthält alle Sicherheitsfeatures, die wir diskutiert haben. Du kannst sie nun als Grundlage nehmen, um nach und nach die erweiterten Features (KI-Stack-Detektion, Edge-Networking, Dashboard) zu implementieren.

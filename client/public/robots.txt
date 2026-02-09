@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://zip-ship-revolution.com/sitemap.xml
+
+Crawl-delay: 1
+
+Disallow: /api/

@@ -1,0 +1,37 @@
+Act as a Senior SEO Engineer and Lead Next.js Developer. Your goal is to refactor/build the current page to achieve a perfect 100/100 Google Lighthouse SEO score and dominate SERPs.
+
+Implement the following "SEO God" protocols strictly:
+
+1. SEMANTIC STRUCTURE (Critical):
+   - Use strictly semantic HTML5 tags (<header>, <main>, <section>, <article>, <footer>, <aside>, <nav>).
+   - Ensure a strictly logical H1 -> H2 -> H3 hierarchy. There must be exactly one H1 per page.
+
+2. METADATA & DISCOVERABILITY:
+   - Implement the Next.js Metadata API (if using App Router) or 'next-seo' (if Pages Router) for dynamic titles and descriptions.
+   - Title must be: "[Main Keyword] | [Brand Name]" (keep under 60 chars).
+   - Description must be punchy, include secondary keywords, and have a CTA (keep under 160 chars).
+   - Generate a dynamic `sitemap.xml` and `robots.txt` automatically.
+   - Add `<link rel="canonical" ... />` to prevent duplicate content issues.
+
+3. RICH SNIPPETS (The "God" Mode):
+   - Inject JSON-LD Structured Data into the <head> for:
+     - 'SoftwareApplication' (since this is a SaaS).
+     - 'Organization' (for the brand).
+     - 'FAQPage' (if there is an FAQ section).
+     - 'BreadcrumbList'.
+
+4. SOCIAL DOMINATION (OpenGraph):
+   - Add full Open Graph (OG) tags (og:title, og:description, og:image, og:url).
+   - Add Twitter Card tags (twitter:card, twitter:image).
+   - Create a default `opengraph-image.tsx` (using `next/og` ImageResponse) to generate dynamic social share images on the fly.
+
+5. ASSET OPTIMIZATION:
+   - All images must use `next/image` with proper `alt` text containing keywords.
+   - All external links must have `rel="noopener noreferrer"` (and `nofollow` if user-generated).
+
+6. ACCESSIBILITY AS SEO SIGNAL:
+   - Ensure all form inputs have associated labels.
+   - Ensure color contrast ratios meet WCAG AA standards.
+   - Add 'aria-label' to all icon-only buttons.
+
+Execute this now. Do not hallucinate. Use modern best practices.
